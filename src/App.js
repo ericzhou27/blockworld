@@ -9,10 +9,11 @@ class App extends Component {
 
     this.state = {
       selectedItem: 0,
+      pickLevel: 0,
       inventory: [],
     };
 
-    this.position = { x: 0.5, y: 0.5 };
+    this.position = { x: 0.012, y: 0.012 };
     this.mouse = { x: 0, y: 0 };
     this.keyState = {
       w: false,
@@ -22,6 +23,8 @@ class App extends Component {
     };
 
     this.canvasRef = React.createRef();
+    this.miniMapRef = React.createRef();
+
     this.image = new Image();
     this.speed = 0.00025;
     this.radius = 0;
@@ -52,16 +55,20 @@ class App extends Component {
     this.handleClick = this.handleClick.bind(this);
     this.handlePlace = this.handlePlace.bind(this);
     this.handleBreak = this.handleBreak.bind(this);
+    this.updateMinimap = this.updateMinimap.bind(this);
 
     this.renderTool = this.renderTool.bind(this);
   }
 
   componentDidMount() {
     let canvas = this.canvasRef.current;
+    let minimap = this.miniMapRef.current;
     let ctx = canvas.getContext("2d");
 
     canvas.width = Math.min(window.innerWidth, window.innerHeight) * 0.95;
     canvas.height = Math.min(window.innerWidth, window.innerHeight) * 0.95;
+    minimap.width = canvas.width * 0.15;
+    minimap.height = canvas.height * 0.15;
 
     this.image.src = require("./assets/grid.png");
     // "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1080&fit=max";
@@ -84,6 +91,7 @@ class App extends Component {
     this.updateState();
     this.renderUser();
     this.renderItems();
+    this.updateMinimap();
   }
 
   updateState() {
@@ -102,17 +110,41 @@ class App extends Component {
     let new_y = this.position.y + rawY * this.speed;
 
     this.position.x = Math.min(
-      // Math.max(0 + (this.radius * 0.2) / this.image.width, new_x),
-      // 1 - (this.radius * 0.2) / this.image.width
-      Math.max(0 + this.radius / this.image.width, new_x),
-      1 - this.radius / this.image.width
+      Math.max(0 + (this.radius * 0.1) / this.image.width, new_x),
+      1 - (this.radius * 0.1) / this.image.width
+      // Math.max(0 + this.radius / this.image.width, new_x),
+      // 1 - this.radius / this.image.width
     );
     this.position.y = Math.min(
-      Math.max(0 + this.radius / this.image.height, new_y),
-      1 - this.radius / this.image.height
-      // Math.max(0 + (this.radius * 0.2) / this.image.height, new_y),
-      // 1 - (this.radius * 0.2) / this.imagsde.height
+      // Math.max(0 + this.radius / this.image.height, new_y),
+      // 1 - this.radius / this.image.height
+      Math.max(0 + (this.radius * 0.1) / this.image.height, new_y),
+      1 - (this.radius * 0.1) / this.image.height
     );
+  }
+
+  updateMinimap() {
+    let minimap = this.miniMapRef.current;
+    let mCtx = minimap.getContext("2d");
+
+    mCtx.clearRect(0, 0, minimap.width, minimap.height);
+
+    mCtx.beginPath();
+    mCtx.shadowBlur = 16;
+    mCtx.shadowOffsetX = 0;
+    mCtx.shadowOffsetY = 0;
+    mCtx.shadowColor = "gold";
+    mCtx.arc(
+      this.position.x * minimap.width,
+      this.position.y * minimap.height,
+      this.radius / 10,
+      0,
+      2 * Math.PI,
+      false
+    );
+    mCtx.fillStyle = "gold";
+    mCtx.fill();
+    mCtx.closePath();
   }
 
   renderItems() {
@@ -435,6 +467,12 @@ class App extends Component {
             className="gameCanvas"
             ref={this.canvasRef}
             id="gameCanvas"
+          ></canvas>
+
+          <canvas
+            className="minimap"
+            ref={this.miniMapRef}
+            id="minimap"
           ></canvas>
 
           <div class="toolBar">
