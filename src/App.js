@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { GiWarPick, GiStoneCrafting } from "react-icons/gi";
 import { getRanHex } from "./util";
 import "./App.css";
+import Seed from "./server/seed"
 
 class App extends Component {
   constructor(props) {
@@ -61,6 +62,7 @@ class App extends Component {
   }
 
   componentDidMount() {
+    Seed();
     let canvas = this.canvasRef.current;
     let minimap = this.miniMapRef.current;
     let ctx = canvas.getContext("2d");
