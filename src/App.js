@@ -11,9 +11,12 @@ class App extends Component {
       selectedItem: 0,
       pickLevel: 0,
       inventory: [],
+
+      wood: 0,
+      rock: 0,
     };
 
-    this.position = { x: 0.012, y: 0.012 };
+    this.position = { x: 0.5, y: 0.5 };
     this.mouse = { x: 0, y: 0 };
     this.keyState = {
       w: false,
@@ -28,22 +31,16 @@ class App extends Component {
     this.image = new Image();
     this.speed = 0.00025;
     this.radius = 0;
-    // this.radius = 0.01;
     this.screenWindowWidth = 0.05;
+    this.animState = 0;
 
-    this.trees = [
-      { x: 0.1, y: 0.1, health: 1, id: "12314" },
-      { x: 0.2, y: 0.3, health: 1, id: "12214" },
-      { x: 0.5, y: 0.5, health: 1, id: "12114" },
-      { x: 0.8, y: 0.4, health: 1, id: "12014" },
+    this.objects = [
+      { x: 0.5, y: 0.5, health: 1, id: "12114", hit: 0, type: "tree" },
+      { x: 0.51, y: 0.49, health: 1, id: "12112", hit: 0, type: "tree" },
+      { x: 0.49, y: 0.51, health: 1, id: "35254", hit: 0, type: "rock" },
+      { x: 0.48, y: 0.5, health: 1, id: "35252", hit: 0, type: "rock" },
+      { x: 0.51, y: 0.51, health: 1, id: "15646", hit: 0, type: "block" },
     ];
-    this.rocks = [
-      { x: 0.12, y: 0.07, health: 1, id: "34636" },
-      { x: 0.2, y: 0.35, health: 1, id: "56456" },
-      { x: 0.49, y: 0.51, health: 1, id: "35254" },
-      { x: 0.89, y: 0.2, health: 1, id: "96765" },
-    ];
-    this.myBlocks = [{ x: 0.51, y: 0.51, health: 1, id: "15646", hit: 0 }];
 
     this.keyDown = this.keyDown.bind(this);
     this.keyUp = this.keyUp.bind(this);
@@ -56,7 +53,6 @@ class App extends Component {
     this.handlePlace = this.handlePlace.bind(this);
     this.handleBreak = this.handleBreak.bind(this);
     this.updateMinimap = this.updateMinimap.bind(this);
-
     this.renderTool = this.renderTool.bind(this);
   }
 
@@ -83,7 +79,8 @@ class App extends Component {
       this.radius = Math.min(this.image.width, this.image.height) * 0.01;
       console.log("RADIUS - ", this.radius);
       // setInterval(this.renderFrame, 1000 / 30);
-      setInterval(this.renderFrame, 1000 / 60);
+      // setInterval(this.renderFrame, 1000 / 60);
+      this.renderFrame();
     };
   }
 
@@ -92,6 +89,8 @@ class App extends Component {
     this.renderUser();
     this.renderItems();
     this.updateMinimap();
+
+    requestAnimationFrame(this.renderFrame);
   }
 
   updateState() {
@@ -155,69 +154,70 @@ class App extends Component {
     const screenWindow =
       Math.min(imageHeight, imageWidth) * this.screenWindowWidth;
 
-    for (let rock of this.rocks) {
-      let backgroundX = rock.x * imageWidth;
-      let backgroundY = rock.y * imageHeight;
+    for (const [index, object] of this.objects.entries()) {
+      let backgroundX = object.x * imageWidth;
+      let backgroundY = object.y * imageHeight;
       let canvasX = this.position.x * imageWidth;
       let canvasY = this.position.y * imageHeight;
       let topLeftX = canvasX - screenWindow / 2;
       let topLeftY = canvasY - screenWindow / 2;
       let a = -((topLeftX - backgroundX) / screenWindow) * canvas.width;
       let b = -((topLeftY - backgroundY) / screenWindow) * canvas.height;
+      let type = object.type;
+      let displacementX = [0, 5, 10, 5, 0, -5, -10, -5, 0];
 
       ctx.beginPath();
-      ctx.shadowBlur = 16;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      ctx.shadowColor = "grey";
-      ctx.arc(a, b, this.radius * 2, 0, 2 * Math.PI, false);
-      ctx.fillStyle = "grey";
-      ctx.fill();
-    }
-
-    for (let tree of this.trees) {
-      let backgroundX = tree.x * imageWidth;
-      let backgroundY = tree.y * imageHeight;
-      let canvasX = this.position.x * imageWidth;
-      let canvasY = this.position.y * imageHeight;
-      let topLeftX = canvasX - screenWindow / 2;
-      let topLeftY = canvasY - screenWindow / 2;
-      let a = -((topLeftX - backgroundX) / screenWindow) * canvas.width;
-      let b = -((topLeftY - backgroundY) / screenWindow) * canvas.height;
-
-      ctx.beginPath();
-      ctx.shadowBlur = 16;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      // ctx.shadowColor = "green";
-      ctx.arc(a, b, this.radius * 3, 0, 2 * Math.PI, false);
-      ctx.fillStyle = "green";
-      ctx.fill();
-    }
-
-    for (const [index, block] of this.myBlocks.entries()) {
-      let backgroundX = block.x * imageWidth;
-      let backgroundY = block.y * imageHeight;
-      let canvasX = this.position.x * imageWidth;
-      let canvasY = this.position.y * imageHeight;
-
-      // check if tree in bounds
-      let topLeftX = canvasX - screenWindow / 2;
-      let topLeftY = canvasY - screenWindow / 2;
-
-      let a = -((topLeftX - backgroundX) / screenWindow) * canvas.width;
-      let b = -((topLeftY - backgroundY) / screenWindow) * canvas.height;
-
-      ctx.beginPath();
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      ctx.arc(a, b, this.radius, 0, 2 * Math.PI, false);
-
-      ctx.fillStyle = block.hit > 0 ? "red" : "black";
-      this.myBlocks[index].hit -= 1;
-
-      ctx.fill();
+      if (type === "tree") {
+        let curHit = this.objects[index].hit;
+        ctx.shadowBlur = 16;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.arc(
+          a + displacementX[curHit],
+          b,
+          this.radius * 3,
+          0,
+          2 * Math.PI,
+          false
+        );
+        ctx.fillStyle = object.hit > 0 ? "red" : "green";
+        if (curHit > 0) this.objects[index].hit -= 1;
+        ctx.fill();
+      } else if (type === "rock") {
+        let curHit = this.objects[index].hit;
+        ctx.shadowBlur = 16;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowColor = "grey";
+        ctx.arc(
+          a + displacementX[curHit],
+          b,
+          this.radius * 2,
+          0,
+          2 * Math.PI,
+          false
+        );
+        ctx.fillStyle = object.hit > 0 ? "red" : "grey";
+        if (this.objects[index].hit > 0) this.objects[index].hit -= 1;
+        ctx.fill();
+      } else if (type === "block") {
+        let curHit = this.objects[index].hit;
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.arc(
+          a + displacementX[curHit] / 2,
+          b,
+          this.radius,
+          0,
+          2 * Math.PI,
+          false
+        );
+        ctx.fillStyle = object.hit > 0 ? "red" : "black";
+        if (this.objects[index].hit > 0) this.objects[index].hit -= 1;
+        ctx.fill();
+      }
+      ctx.closePath();
     }
   }
 
@@ -277,6 +277,8 @@ class App extends Component {
     ctx.fill();
     ctx.closePath();
 
+    let displacementX = [0, 5, 10, 5, 0, -5, -10, -5, 0];
+
     ctx.beginPath();
     ctx.fillStyle = "gold";
     ctx.arc(
@@ -288,8 +290,12 @@ class App extends Component {
       false
     );
     ctx.arc(
-      0.5 * canvas.width + this.radius * normAX * 1.5,
-      0.5 * canvas.height + this.radius * normAY * 1.5,
+      0.5 * canvas.width +
+        this.radius * normAX * 1.5 +
+        normAX * displacementX[this.animState],
+      0.5 * canvas.height +
+        this.radius * normAY * 1.5 +
+        normAY * displacementX[this.animState],
       this.radius * 0.3,
       0,
       2 * Math.PI,
@@ -297,14 +303,13 @@ class App extends Component {
     );
     ctx.fill();
 
+    if (this.animState > 0) this.animState -= 1;
     if (this.state.selectedItem > 1) {
       ctx.beginPath();
       ctx.arc(
         // abs position on canvas
         (0.5 + (0.0025 / this.screenWindowWidth) * unitX) * canvas.width,
         (0.5 + (0.0025 / this.screenWindowWidth) * unitY) * canvas.height,
-        // (0.5 + 0.09 * unitX) * canvas.width,
-        // (0.5 + 0.09 * unitY) * canvas.height,
         this.radius,
         0,
         2 * Math.PI,
@@ -324,17 +329,14 @@ class App extends Component {
     let id = getRanHex(16);
     console.log("ID - ", id);
 
-    this.myBlocks.push({
+    this.objects.push({
       // %position relative to image
       x: this.position.x + 0.0025 * unitX,
       y: this.position.y + 0.0025 * unitY,
-      // x: this.position.x + 0.03 * 0.15 * unitX,
-      // y: this.position.y + 0.03 * 0.15 * unitY,
-      // x: this.position.x + 0.03 * 0.3 * unitX,
-      // y: this.position.y + 0.03 * 0.3 * unitY,
       health: 1,
       id: id,
       hit: 0,
+      type: "block",
     });
   }
 
@@ -354,25 +356,58 @@ class App extends Component {
     // if it's hp is 0, delete it from the array locally and delete the doc.
     // if item is block, delete. If tree or ore, give items.
 
-    for (let block of this.myBlocks) {
+    this.animState = 7;
+
+    // for (let block of this.myBlocks) {
+    for (let block of this.objects) {
       // compute hitbox
-      let topLeftX = block.x - 0.0025 / 2;
-      let topLeftY = block.y - 0.0025 / 2;
-      let bottomRightX = block.x + 0.0025 / 2;
-      let bottomRightY = block.y + 0.0025 / 2;
+      let type = block.type;
+      let hit = block.hit;
+      const relRad = 0.0025;
+      let topLeftX, topLeftY, bottomRightX, bottomRightY;
+
+      if (type === "block") {
+        topLeftX = block.x - relRad / 2;
+        topLeftY = block.y - relRad / 2;
+        bottomRightX = block.x + relRad / 2;
+        bottomRightY = block.y + relRad / 2;
+      } else if (type === "tree") {
+        topLeftX = block.x - (3 * relRad) / 2;
+        topLeftY = block.y - (3 * relRad) / 2;
+        bottomRightX = block.x + (3 * relRad) / 2;
+        bottomRightY = block.y + (3 * relRad) / 2;
+      } else if (type === "rock") {
+        topLeftX = block.x - (2 * relRad) / 2;
+        topLeftY = block.y - (2 * relRad) / 2;
+        bottomRightX = block.x + (2 * relRad) / 2;
+        bottomRightY = block.y + (2 * relRad) / 2;
+      }
 
       if (
         targetX > topLeftX &&
         targetX < bottomRightX &&
         targetY > topLeftY &&
-        targetY < bottomRightY
+        targetY < bottomRightY &&
+        hit === 0
       ) {
-        var targetIndex = this.myBlocks.findIndex((x) => x.id == block.id);
-        this.myBlocks[targetIndex].hit = 5;
-        this.myBlocks[targetIndex].health -= 0.4;
+        // console.log("HIT DETECTED - ", block);
 
-        if (this.myBlocks[targetIndex].health < 0) {
-          this.myBlocks.splice(targetIndex, 1);
+        if (type === "tree") {
+          this.setState({
+            wood: this.state.wood + 1,
+          });
+        } else if (type === "rock") {
+          this.setState({
+            rock: this.state.rock + 1,
+          });
+        }
+
+        var targetIndex = this.objects.findIndex((x) => x.id == block.id);
+        this.objects[targetIndex].hit = 7;
+        this.objects[targetIndex].health -= 0.1;
+
+        if (this.objects[targetIndex].health < 0) {
+          this.objects.splice(targetIndex, 1);
         }
         break;
       }
@@ -443,15 +478,21 @@ class App extends Component {
         class={className}
         onClick={() => {
           console.log("INDEX - ", index);
-          this.setState({
-            selectedItem: index,
-          });
+          if (index !== 1) {
+            this.setState({
+              selectedItem: index,
+            });
+          }
         }}
       >
         {index === 0 ? (
           <GiWarPick />
         ) : index === 1 ? (
           <GiStoneCrafting />
+        ) : index === 2 ? (
+          <div class="noselect">{this.state.wood}</div>
+        ) : index === 3 ? (
+          <div class="noselect">{this.state.rock}</div>
         ) : (
           <></>
         )}
